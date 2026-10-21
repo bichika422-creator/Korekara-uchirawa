@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"content="width=device-width,initial-scale=1.0">
+    <title>これからうちらは</title>
+<style>
+button{
+    font-size:20px;
+    padding:15px;
+    margin:10px;
+    display:block;
+    width:80%;
+}        
+</style>
+</head>
+<body>
+    <h1>これからうちらは</h1>
+    <button onclick="addAction()">追加</button>
+    <button onclick="drawAction()">抽選</button>
+    <button onclick="showHistory()">過去の記録</button>
+<script> 
+let actions=
+JSON.parse(localStorage.getItem("actions"))||
+[]; 
+function addAction(){
+    let action=prompt("やりたいことを入力してね");
+    if(action){
+       actions.push(action);
+       localStorage.setItem("actions",
+    JSON.stringify(actions));    
+        alert(action+"を追加したよ！");
+    }
+}
+function drawAction(){
+    if(actions.length==0){
+        alert("候補がありません");
+        return;
+    }
+    let selected=actions[Math.floor(Math.random()*
+actions.length)];
+    let completed=confirm("抽選結果:"+selected+"\n完了した？");
+    if(completed){
+        let comment=prompt("ひと言コメント");
+        actions.splice(actions.indexOf(selected),1);
+        localStorage.setItem("actions",
+        JSON.stringify(actions));
+        let
+        history=JSON.parse(localStorage.getItem("history"))
+        ||[];
+        history.push({action:selected,comment:comment});
+        localStorage.setItem("history",JSON.stringify(history));
+    }        
+}        
+function showHistory(){
+    let
+history=JSON.parse(localStorage.getItem("history"))
+||[];
+    if(history.length===0){
+        alert("まだ記録がありません");
+        return;
+    } 
+    let text="";
+    for(let item of history){
+        text+=item.action+"\n";
+        text+="ひとこと:"+(item.comment||"なし")
++"\n\n";    
+    }   
+    alert(text);
+}        
+</script>          
+</body>
+</html>        
