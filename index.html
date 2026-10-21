@@ -11,24 +11,56 @@ button{
     margin:10px;
     display:block;
     width:80%;
-}        
+    border-radius:20px;
+    background-color:#ffe4ec;
+    border:2px solid#f5b6ca;
+    color:#704457;
+} 
+body{
+    background-color:#fff7fa;
+    font-family:sans-serif;
+}
+h1{
+    text-align:center;
+    color:#b76e88;
+    font-size:30px;
+    margin:30px 0;
+    letter-spacing:3px;
+}       
 </style>
 </head>
 <body>
+<div id="loginArea">
+  <h2>ログイン</h2>
+  <input id="email" type="email" placeholder="メールアドレス">
+  <input id="password" type="password" placeholder="パスワード">
+  <button id="loginButton">ログイン</button>
+  <p id="loginMessage"></p>
+</div>
+
     <h1>これからうちらは</h1>
-    <button onclick="addAction()">追加</button>
-    <button onclick="drawAction()">抽選</button>
-    <button onclick="showHistory()">過去の記録</button>
+    <button onclick="addAction()">🎀追加🎀</button>
+    <button onclick="drawAction()">🌹抽選🌹</button>
+    <button onclick="showHistory()">🐶過去の記録🐶</button>
 <script> 
 let actions=
 JSON.parse(localStorage.getItem("actions"))||
 []; 
+function updateActions(newActions){
+    actions=newActions;
+}
+window.updateActions=updateActions;
+window.saveActions=function(){
+    window.dispatchEvent(new Event("saveActions"));
+};
 function addAction(){
     let action=prompt("やりたいことを入力してね");
     if(action){
        actions.push(action);
+       
        localStorage.setItem("actions",
-    JSON.stringify(actions));    
+    JSON.stringify(actions)); 
+       window.saveActions();
         alert(action+"を追加したよ！");
     }
 }
@@ -50,6 +82,7 @@ actions.length)];
         ||[];
         history.push({action:selected,comment:comment});
         localStorage.setItem("history",JSON.stringify(history));
+        window.saveActions();
     }        
 }        
 function showHistory(){
@@ -69,5 +102,71 @@ history=JSON.parse(localStorage.getItem("history"))
     alert(text);
 }        
 </script>          
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+  import{getFirestore,doc,setDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJh2NXW9p966wKuVe6CdJFD9jvY4VGRcs",
+    authDomain: "korekara-uchirawa.firebaseapp.com",
+    projectId: "korekara-uchirawa",
+    storageBucket: "korekara-uchirawa.firebasestorage.app",
+    messagingSenderId: "877853219875",
+    appId: "1:877853219875:web:00d48343f47b2567102596"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth=getAuth(app);
+  const db=getFirestore(app);
+  const shareDoc=doc(db,"shared","ourActions");
+  window.addEventListener("saveActions",async()=>{
+    await setDoc(shareDoc,{
+        actions:JSON.parse(localStorage.getItem("actions"))||[]
+    },{merge:true});
+  });
+  onSnapshot(shareDoc,(snapshot)=>{
+    if(snapshot.exists()){
+        const data=snapshot.data();
+        localStorage.setItem("actions",JSON.stringify(data.actions||[]));
+        window.updateActions(data.actions||[]);
+        localStorage.setItem("history",JSON.stringify(data.history||[]));
+    }
+    window.addEventListener("saveActions", async () => {
+    const actions = JSON.parse(localStorage.getItem("actions")) || [];
+    const history = JSON.parse(localStorage.getItem("history")) || [];
+    await setDoc(shareDoc, { actions, history });
+});
+});
+  document.getElementById("loginButton").addEventListener("click", async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        document.getElementById("loginMessage").textContent = "ログイン成功！";
+    } catch (error) {
+        document.getElementById("loginMessage").textContent = "ログインできませんでした";
+        console.error(error);
+    }   
+});
+onAuthStateChanged(auth, (user) => {
+    const loginArea = document.getElementById("loginArea");
+
+    if (user) {
+        loginArea.style.display = "none";
+        console.log("ログイン中");
+    } else {
+        loginArea.style.display = "block";
+        console.log("未ログイン");
+    }
+});
+
+</script>
 </body>
 </html>        
